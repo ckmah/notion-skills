@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import spawn from "cross-spawn";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { LOGS_DIR, NTN_ERROR_LOG } from "./paths.js";
 
@@ -48,10 +48,16 @@ async function spawnNtn(args: string[], stdin?: string): Promise<SpawnResult> {
       env: process.env,
     });
 
+    // stdio is all "pipe", so these streams are guaranteed present.
+    // cross-spawn types them as nullable (generic SpawnOptions); assert.
+    const childStdout = child.stdout!;
+    const childStderr = child.stderr!;
+    const childStdin = child.stdin!;
+
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk) => { stdout += chunk; });
-    child.stderr.on("data", (chunk) => { stderr += chunk; });
+    childStdout.on("data", (chunk) => { stdout += chunk; });
+    childStderr.on("data", (chunk) => { stderr += chunk; });
 
     child.on("error", (err) => {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") {
@@ -70,9 +76,9 @@ async function spawnNtn(args: string[], stdin?: string): Promise<SpawnResult> {
     });
 
     if (stdin !== undefined) {
-      child.stdin.write(stdin);
+      childStdin.write(stdin);
     }
-    child.stdin.end();
+    childStdin.end();
   });
 }
 

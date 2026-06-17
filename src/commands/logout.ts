@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { spawn } from "node:child_process";
+import spawn from "cross-spawn";
 import { assertNtnInstalled } from "../ntn.js";
 
 export async function logoutCommand(): Promise<void> {

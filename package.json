@@ -51,10 +51,12 @@
     "@inquirer/prompts": "^7.2.1",
     "chalk": "^5.4.1",
     "commander": "^12.1.0",
+    "cross-spawn": "^7.0.6",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@tanstack/intent": "^0.0.40",
+    "@types/cross-spawn": "^6.0.6",
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2"
   }
