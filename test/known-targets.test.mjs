@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { homedir } from "node:os";
+import { isAbsolute, join } from "node:path";
 import { KNOWN_TARGETS, findTargetByKey } from "../dist/known-targets.js";
 
 const HOME = homedir();
@@ -28,29 +29,29 @@ test("every target has a non-empty label and dir", () => {
 
 test("all target dirs are absolute paths under HOME or XDG", () => {
   for (const t of KNOWN_TARGETS) {
-    assert.ok(t.dir.startsWith("/"), `${t.key} dir should be absolute`);
+    assert.ok(isAbsolute(t.dir), `${t.key} dir should be absolute`);
   }
 });
 
 test("claude path", () => {
-  assert.equal(findTargetByKey("claude")?.dir, `${HOME}/.claude/skills`);
+  assert.equal(findTargetByKey("claude")?.dir, join(HOME, ".claude", "skills"));
 });
 
 test("codex path", () => {
-  assert.equal(findTargetByKey("codex")?.dir, `${HOME}/.codex/skills`);
+  assert.equal(findTargetByKey("codex")?.dir, join(HOME, ".codex", "skills"));
 });
 
 test("opencode path follows XDG", () => {
-  const expected = (process.env.XDG_CONFIG_HOME || `${HOME}/.config`) + "/opencode/skills";
-  assert.equal(findTargetByKey("opencode")?.dir, expected);
+  const xdg = process.env.XDG_CONFIG_HOME || join(HOME, ".config");
+  assert.equal(findTargetByKey("opencode")?.dir, join(xdg, "opencode", "skills"));
 });
 
 test("cursor path", () => {
-  assert.equal(findTargetByKey("cursor")?.dir, `${HOME}/.cursor/skills`);
+  assert.equal(findTargetByKey("cursor")?.dir, join(HOME, ".cursor", "skills"));
 });
 
 test("gemini path", () => {
-  assert.equal(findTargetByKey("gemini")?.dir, `${HOME}/.gemini/skills`);
+  assert.equal(findTargetByKey("gemini")?.dir, join(HOME, ".gemini", "skills"));
 });
 
 test("findTargetByKey: unknown returns undefined", () => {
@@ -67,5 +68,5 @@ test("each target with a docs URL is well-formed", () => {
 });
 
 test("agents path", () => {
-  assert.equal(findTargetByKey("agents")?.dir, `${HOME}/.agents/skills`);
+  assert.equal(findTargetByKey("agents")?.dir, join(HOME, ".agents", "skills"));
 });

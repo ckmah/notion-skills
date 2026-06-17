@@ -7,6 +7,7 @@ import { slugify, splitToolsRespectingParens } from "./convert.js";
 import { KNOWN_TARGETS } from "./known-targets.js";
 import type { SkillProperties } from "./notion.js";
 import { SKILLS_STORE } from "./paths.js";
+import { isInsideDir } from "./path-utils.js";
 
 export interface ParsedSkill {
   name: string;          // slugified
@@ -92,11 +93,8 @@ export async function discoverSkills(opts: DiscoverOptions): Promise<Classificat
         continue;
       }
 
-      const inCentralStore =
-        realpath.startsWith(centralStore + "/") || realpath === centralStore;
-      const sourceInCentralStore =
-        sourceDisplay.startsWith(centralStore + "/") ||
-        sourceDisplay === centralStore;
+      const inCentralStore = isInsideDir(realpath, centralStore);
+      const sourceInCentralStore = isInsideDir(sourceDisplay, centralStore);
 
       // Symlink from a target dir into central store → already synced
       // (managed). The actual entry sitting in the central store is
@@ -209,7 +207,7 @@ function collapseDuplicateSlugs(input: Classification[]): Classification[] {
 
 function priorityOf(realpath: string): number {
   for (let i = 0; i < KNOWN_TARGETS.length; i++) {
-    if (realpath.startsWith(KNOWN_TARGETS[i]!.dir)) return i;
+    if (isInsideDir(realpath, KNOWN_TARGETS[i]!.dir)) return i;
   }
   return KNOWN_TARGETS.length; // unknown source dirs sort last
 }
@@ -428,10 +426,7 @@ export function markConflicts(
  * authoritative content.
  */
 export function sourceIsInScope(source: string, scopeTargetDirs: string[]): boolean {
-  return scopeTargetDirs.some((d) => {
-    const normalized = d.endsWith("/") ? d : d + "/";
-    return source === d || source.startsWith(normalized);
-  });
+  return scopeTargetDirs.some((d) => isInsideDir(source, d));
 }
 
 // ---------- source resolution ----------

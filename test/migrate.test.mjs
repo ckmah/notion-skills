@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync, realpathSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { discoverSkills, markConflicts, resolveSourceDirs, parseSkillFile, sourceIsInScope } from "../dist/migrate.js";
 
@@ -523,20 +523,27 @@ test("markConflicts: leaves 'invalid' alone", () => {
 
 // ---------- resolveSourceDirs ----------
 
+// Absolute paths that survive `path.resolve` unchanged on every OS.
+// (resolveSourceDirs resolves `extras` via path.resolve, so POSIX-only
+// literals like "/c" become "C:\\c" on Windows and break the asserts.)
+const A = resolve("a");
+const B = resolve("b");
+const C = resolve("c");
+
 test("resolveSourceDirs: target dirs + extras combined", () => {
   const dirs = resolveSourceDirs({
-    targetDirs: ["/a", "/b"],
-    extras: ["/c"],
+    targetDirs: [A, B],
+    extras: [C],
   });
-  assert.deepEqual(dirs.sort(), ["/a", "/b", "/c"]);
+  assert.deepEqual(dirs.sort(), [A, B, C].sort());
 });
 
 test("resolveSourceDirs: dedups duplicate paths", () => {
   const dirs = resolveSourceDirs({
-    targetDirs: ["/a", "/b"],
-    extras: ["/a"],
+    targetDirs: [A, B],
+    extras: [A],
   });
-  assert.deepEqual(dirs.sort(), ["/a", "/b"]);
+  assert.deepEqual(dirs.sort(), [A, B].sort());
 });
 
 // ---------- sourceIsInScope (regression: don't delete --from sources) ----------
