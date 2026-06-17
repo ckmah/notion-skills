@@ -249,15 +249,19 @@ export async function ntnVersion(): Promise<string | null> {
  * conversion server-side. Used by `migrate` to push a local SKILL.md body
  * into a freshly-created Notion page.
  *
- * The markdown is glued onto `--content=` as a single argv token rather
- * than passed as a separate value. ntn is built on Rust's clap, which
- * rejects flag values that start with `-` ("unexpected argument '- '")
- * unless they're attached with `=`. This bites multi-file skills whose
- * sibling files lead with a markdown bullet (`- item`).
+ * The markdown is piped via stdin (`ntn pages update <id> < page.md`)
+ * rather than passed as a `--content` argv value. Two reasons:
+ *   1. Windows caps a process command line at ~8 KB (cmd.exe) — a typical
+ *      SKILL.md blows past it ("The command line is too long." / spawn
+ *      ENAMETOOLONG). POSIX ARG_MAX is ~2 MB so this only bit on Windows.
+ *   2. It sidesteps clap rejecting flag values that start with `-`
+ *      ("unexpected argument '- '"), which bit multi-file skills whose
+ *      sibling files lead with a markdown bullet (`- item`).
  */
 export async function ntnSetPageMarkdown(pageId: string, markdown: string): Promise<void> {
   const result = await spawnNtn(
-    ["pages", "update", pageId, `--content=${markdown}`, "--allow-deleting-content"],
+    ["pages", "update", pageId, "--allow-deleting-content"],
+    markdown,
   );
   if (result.code === 4 || /API token is invalid/i.test(result.stderr)) {
     throw new NtnAuthError();
